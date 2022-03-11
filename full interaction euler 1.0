@@ -1,0 +1,67 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from ipywidgets import interact, interactive, fixed, interact_manual
+import ipywidgets as widgets
+import matplotlib.pyplot as plt
+import time
+
+### PARAMÈTRES ###
+
+n=20 #nombre de particules
+omega_moy = 1 #pulsation moyenne des particules
+delta_omega = 1 #écart type des pulsations
+K_N=1 #constante de couplage
+delta_t = 0.0001 #pas du temps
+temps_tot = 0.2 #temps d'observation
+
+### CONDITIONS INITIALES ###
+
+theta = np.random.uniform(0, 2*np.pi,n)
+#positions aléatoirement réparties sur le cercle
+
+omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(n)))
+#pulsations réparties comme une distribution gaussienne
+
+
+
+### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
+
+### Fonction d'évolution ###
+
+d_theta = np.zeros(n)
+
+def système_plus1(omega_ini, theta, K_N, delta_t):
+   
+    for i in range(n):
+        d_theta[i] = omega_ini[i] + np.sum(K_N*(np.sin(theta)-np.ones(n)*theta[i]))
+   
+    theta = theta + d_theta*delta_t
+    return theta
+
+
+
+### Évolution du système au cours du temps ###
+
+
+
+nb_pas = int(temps_tot//delta_t) #Nombre total de pas
+
+moy_dif = np.empty([n, nb_pas],float)
+
+temps_fais = 0 #initialisation du temps
+
+t = np.empty(nb_pas,float) #tableau contenant tous les temps
+
+for k in range(nb_pas):
+       
+    moy_dif[:,k] = np.cos(theta[:]) - np.mean(np.cos(theta))
+       
+    theta = système_plus1(omega_ini, theta, K_N, delta_t)
+    #Invocation de la fonction évolution
+       
+    temps_fais = temps_fais + delta_t #Temps fait
+    t[k] = temps_fais #Liste de la totalité des temps
+   
+for i in range(n):
+    plt.plot(t, moy_dif[i,:])
