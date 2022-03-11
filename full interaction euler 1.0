@@ -39,7 +39,7 @@ def système_plus1(omega_ini, theta, K_N, delta_t):
     theta = theta + d_theta*delta_t
     return theta
 
-
+ 
 
 ### Évolution du système au cours du temps ###
 
