@@ -1,0 +1,130 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import animation
+
+### PARAMÈTRES ###
+n=20 #nombre de particules
+omega_moy = 1 #pulsation moyenne des particules
+delta_omega = 0.5 #écart type des pulsations
+K=10 #constante de couplage
+delta_t = 0.01 #pas du temps
+temps_tot = 50 #temps d'observation
+dt_frame=0.1
+
+### CONDITIONS INITIALES ###
+
+theta = np.random.uniform(0, 2*np.pi,n) 
+#positions aléatoirement réparties sur le cercle
+
+omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(n)))
+#pulsations réparties comme une distribution gaussienne
+
+
+
+### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
+
+### Fonction d'évolution ###
+
+d_theta = np.zeros(n)
+
+def systeme_force(omega_ini,theta,K,n,delta_t) :
+    """ Calcule le pas suivant ou un oscillateur a une vitesse angulaire forcée : il n'unteragit avec personne """
+    d_theta = np.zeros(n)
+   
+    for i in range(n) :
+        if i != n //2 :
+            d_theta[i] = omega_ini[i] + np.sum((K/n)*(np.sin(theta-np.ones(n)*theta[i])))
+        else :
+            d_theta[i] = omega_ini[i]
+    theta = theta + d_theta*delta_t
+    return theta
+
+### Évolution du système au cours du temps ###
+
+nb_pas = int(temps_tot/delta_t) #Nombre total de pas
+
+#VERIFICATION
+#moy_dif = np.empty([n, nb_pas],float)
+
+
+temps_fais = 0 #initialisation du temps
+Dt = 0
+
+t = np.empty(nb_pas,float) #tableau contenant tous les temps
+
+data=[]
+data.append(theta)
+    
+for k in range(nb_pas):
+        
+#    moy_dif[:,k] = np.cos(theta[:]) - np.mean(np.cos(theta))
+        
+    theta = systeme_force(omega_ini, theta, K, n, delta_t) 
+    #Invocation de la fonction évolution
+    if (Dt >= dt_frame):
+        theta_r = np.copy(theta)
+        data.append(theta_r)
+        Dt=0
+    
+    temps_fais = temps_fais + delta_t #Temps fait
+    Dt = Dt + delta_t
+    t[k] = temps_fais #Liste de la totalité des temps
+    
+#VERIFICATION
+#for i in range(n):
+#    plt.plot(t, moy_dif[i,:])
+
+
+
+
+### ANIMATION ###
+
+
+def init():
+    line.set_data([], [])
+    return line,
+
+def animate_en_ligne(i):
+    
+    theta = data[i]
+    x = np.arange(n)
+    y = np.cos(theta)
+    line.set_data(x,y)
+    return line,
+
+def animate_sur_cercle(i):
+    theta = data[i]
+    x = np.cos(theta)
+    y = np.sin(theta)
+    line.set_data(x,y)
+    return line,
+
+      
+fig = plt.figure()
+
+#Animation cos(theta_i) fonction de i
+
+ax = plt.axes(xlim=(-1, n+1), ylim=(-1.1, 1.1)) 
+ax.set_ylabel('cos(theta_i)', size = 15)
+ax.set_xlabel('Numero oscillateur i', size = 15)
+line, = ax.plot([], [], "o", markersize=10.0, color="blue")
+
+anim = animation.FuncAnimation(fig, animate_en_ligne, init_func=init, frames=500, interval=20, blit=True, repeat=False)
+#writerFFMpeg = animation.FFMpegWriter(fps=20)
+#anim.save('synchro_N100_K2_D2_1pulsation_bruit.mp4', writer=writerFFMpeg, dpi=200)
+plt.show()
+
+#Animation theta_i sur un cercle
+
+# ax = plt.axes(xlim=(-1.2, 1.2), ylim=(-1.2, 1.2))
+# ax.axes.yaxis.set_visible(False)
+# ax.axes.xaxis.set_visible(False)  
+# ax.set_aspect('equal')
+# line, = ax.plot([], [], "o", markersize=6.0, color="blue")
+# circle = plt.Circle((0, 0), 1, facecolor='none', edgecolor='black', lw=1)
+# ax.add_patch(circle)
+
+# anim = animation.FuncAnimation(fig, animate_sur_cercle, init_func=init, frames=1250, interval=20, blit=True, repeat=False)
+# writerFFMpeg = animation.FFMpegWriter(fps=20)
+# anim.save('synchro_N100_K50_1erVoisin_gauss_cercle.mp4', writer=writerFFMpeg, dpi=200)
+# plt.show()
