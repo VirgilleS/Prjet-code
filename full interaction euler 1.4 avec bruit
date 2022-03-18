@@ -30,8 +30,7 @@ d_theta = np.zeros(n)
 
 ### Fonction d'évolution ###
 
-def système_plus1(omega_ini, theta, K_N, delta_t):
-   
+def système_plus1(omega_ini, theta, K_N, delta_t, n):
     for i in range(n):
         d_theta[i] = omega_ini[i] + np.sum(K_N*(np.sin(theta-np.ones(n)*theta[i])))
     R=np.array(np.random.normal( 0, 1, size=(n)))
@@ -49,16 +48,14 @@ def evolution_moy_r(n, omega_ini, K_N, delta_t,temps_tot):
     temps_fais = 0 #initialisation du temps   
     t = np.empty(nb_pas,float) #tableau contenant tous les temps
     for k in range(nb_pas):             
-        theta = système_plus1(omega_ini, theta, K_N, delta_t)           
-        temps_fais = temps_fais + delta_t #Temps fait
-        t[k] = temps_fais #Liste de la totalité des temps
+        theta = système_plus1(omega_ini, theta, K_N, delta_t, n)           
         if k > nb_pas/2:
             r.append(np.sqrt(np.mean(np.cos(theta))**2 + np.mean(np.sin(theta))**2))
     return r
 
 r_mean = []
 for j in range(len(K_N)):
-    r_mean.append(np.mean(evolution_moy_r(n, theta, omega_ini, K_N[j], delta_t,temps_tot)))
+    r_mean.append(np.mean(evolution_moy_r(n, omega_ini, K_N[j], delta_t,temps_tot)))
     print(j)
 
  
