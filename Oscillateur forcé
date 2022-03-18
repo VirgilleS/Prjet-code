@@ -1,0 +1,108 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from ipywidgets import interact, interactive, fixed, interact_manual
+import ipywidgets as widgets
+import matplotlib.pyplot as plt
+import time
+
+### PARAMÈTRES ###
+
+n=20 #nombre de particules
+omega_moy = 1 #pulsation moyenne des particules
+delta_omega = 0.5 #écart type des pulsations
+K = 10
+K_N=K/n #constante de couplage
+delta_t = 0.001 #pas du temps
+temps_tot = 20 #temps d'observation
+
+### CONDITIONS INITIALES ###
+
+theta_ini = np.random.uniform(0, 2*np.pi,n) 
+#positions aléatoirement réparties sur le cercle
+
+omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(n)))
+#pulsations réparties comme une distribution gaussienne
+
+
+
+### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
+
+### Fonction d'évolution ###
+
+def système_plus1(omega_ini, theta, couplage, delta_t):
+    """  Calcule le pas suivant selon l'équation dynamique de sproches voisins 1D """
+    d_theta = np.zeros(n)
+    
+    d_theta[0] = omega_ini[0] + couplage*( np.sin(theta[1]-theta[0]) + np.sin(theta[-1] - theta[0]) )
+    d_theta[-1] = omega_ini[-1] + couplage*( np.sin(theta[-2]-theta[-1]) + np.sin(theta[0]-theta[-1]) )
+
+    
+    for i in range(1,n-1):
+            d_theta[i] = omega_ini[i] + couplage*( np.sin(theta[i+1]-theta[i]) + np.sin(theta[i-1]-theta[i]))
+    
+    theta = theta + d_theta*delta_t
+    return theta
+
+def systeme_full_interaction(omega_ini,theta,couplage,delta_t) :
+    """ Calcule le pas suivant où chaque oscillateur est couplé avec tous les autres """
+    d_theta = np.zeros(n)
+    
+    for i in range(n):
+        d_theta[i] = omega_ini[i] + np.sum(couplage*(np.sin(theta-np.ones(n)*theta[i])))
+        
+    theta = theta + d_theta*delta_t
+    return theta
+
+def systeme_force(omega_ini,theta,couplage,delta_t) :
+    """ Calcule le pas suivant ou un oscillateur a une vitesse angulaire forcée : il n'unteragit avec personne """
+    d_theta = np.zeros(n)
+    
+    for i in range(n) :
+        if i != n //2 :
+            d_theta[i] = omega_ini[i] + np.sum(couplage*(np.sin(theta-np.ones(n)*theta[i])))
+        else :
+            d_theta[i] = 5
+    theta = theta + d_theta*delta_t
+    return theta
+
+
+### Évolution du système au cours du temps ###
+def calcul_trajectoire(fin,dt, theta_initial, systeme, couplage ) :
+
+    nb_pas = int(fin// dt) #Nombre total de pas
+
+    temps_fais = 0 #initialisation du temps
+
+    t = np.empty(nb_pas,float) #tableau contenant tous les temps
+    
+    # configuration du système à t= 0
+    theta = theta_initial
+    
+    # vitesses angulaires au cours du temps 
+    vitesse_angle = np.zeros((nb_pas,n))
+    vitesse_angle [0] = omega_ini
+
+    for k in range(1,nb_pas):
+        
+        # variable temporaire des positions 
+        theta_temp = theta
+        
+        # évolution des positions au pas suivant
+        theta = systeme(omega_ini, theta, couplage, dt) 
+        
+        # calcul nouvelles vitesses angulaires
+        vitesse_angle[k] = (theta - theta_temp)/dt
+        
+        temps_fais = temps_fais + dt #Temps fait
+        t[k] = temps_fais #Liste de la totalité des temps
+        
+    return vitesse_angle, np.array(t)
+
+theta_point, t = calcul_trajectoire(temps_tot, delta_t, theta_ini, systeme_force, couplage = K_N)
+
+for oscillateur in range(n) :
+    #if oscillateur == n //2 :
+    plt.plot(t,theta_point[:,oscillateur])
+plt.show()
+
