@@ -8,7 +8,7 @@ import time
 
 ### PARAMÈTRES ###
 
-n=20 #nombre de particules
+n=100 #nombre de particules
 omega_moy = 1 #pulsation moyenne des particules
 delta_omega = 1 #écart type des pulsations
 K=np.arange(1, 5, 0.05)
@@ -27,6 +27,8 @@ omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(n)))
 
 
 ### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
+d_theta = np.zeros(n)
+
 
 ### Fonction d'évolution ###
 
@@ -43,7 +45,6 @@ def système_plus1(omega_ini, theta, K_N, delta_t):
 ### Évolution du système au cours du temps ###
 
 def evolution_moy_r(n, theta, omega_ini, K_N, delta_t,temps_tot):
-    d_theta = np.zeros(n)
     nb_pas = int(temps_tot//delta_t) #Nombre total de pas
     
     moy_dif = np.empty([n, nb_pas],float)
@@ -70,10 +71,9 @@ def evolution_moy_r(n, theta, omega_ini, K_N, delta_t,temps_tot):
 r_mean = []
 for j in range(len(K_N)):
     r_mean.append(np.mean(evolution_moy_r(n, theta, omega_ini, K_N[j], delta_t,temps_tot)[0]))
-
+    print(j)
 
  
 plt.plot(K, r_mean)
 plt.ylim(0, 1)
-plt.show()   
- 
+plt.show()  
