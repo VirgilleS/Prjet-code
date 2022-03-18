@@ -1,0 +1,117 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from ipywidgets import interact, interactive, fixed, interact_manual
+import ipywidgets as widgets
+import matplotlib.pyplot as plt
+import time
+
+### PARAMÈTRES ###
+
+ni, nj = 10, 10 #nombre d'oscillateurs sur les lignes, colonnes
+n = ni*nj
+omega_moy = 1 #pulsation moyenne des particules
+delta_omega = 0.5 #écart type des pulsations
+K = 15
+K_N=K/n #constante de couplage
+delta_t = 0.001 #pas du temps
+temps_tot = 75 #temps d'observation
+
+### CONDITIONS INITIALES ###
+
+theta_ini = np.random.uniform(0, 2*np.pi,(ni,nj)) 
+#positions aléatoirement réparties sur le cercle
+
+omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(ni,nj)))
+#pulsations réparties comme une distribution gaussienne
+
+### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
+
+### Fonction d'évolution ###
+
+def système_reseau(omega_ini, theta, couplage, delta_t):
+    """  Calcule le pas suivant selon l'équation dynamique de sproches voisins 2D : réseaux """
+    d_theta = np.zeros((ni,nj))
+    
+    # conditions périodiques aux bords sur les colonnes 
+    for j in range(nj) :
+        d_theta[0,j] = omega_ini[0,j] + couplage*( np.sin(theta[-1,j] - theta[0,j]) + np.sin(theta[1,j] - theta[0,j]) )
+        d_theta[-1,j] = omega_ini[-1,j] + couplage*( np.sin(theta[0,j] - theta[-1,j]) + np.sin(theta[-2,j] - theta[-1,j]) ) 
+        
+    # conditions périodiques aux bords sur les lignes 
+    for i in range(ni) :
+        if i == 0 or i == ni - 1 :
+            d_theta[i,0] +=  couplage*( np.sin(theta[i,-1] - theta[i,0]) + np.sin(theta[i,1] - theta[i,0]) )
+            d_theta[i,-1] += couplage*( np.sin(theta[i,0] - theta[i,-1]) + np.sin(theta[i,-2] - theta[i,-1]) )
+            
+        else:
+            d_theta[i,0] += omega_ini[1,j] + couplage*( np.sin(theta[i,-1] - theta[i,0]) + np.sin(theta[i,1] - theta[i,0]) )
+            d_theta[i,j] += omega_ini[-1,j] + couplage*( np.sin(theta[i,0] - theta[i,-1]) + np.sin(theta[i,-2] - theta[i,-1]) )
+    
+    for i in range(1,ni-1) :
+        for j in range(1,nj-1) :
+             d_theta[i,j] = omega_ini[i,j] + couplage*( np.sin(theta[i+1,j]-theta[i,j]) + np.sin(theta[i-1,j]-theta[i,j]))
+             d_theta[i,j] += couplage*( np.sin(theta[i,j+1]-theta[i,j]) + np.sin(theta[i,j-1]-theta[i,j]))
+             
+    theta += d_theta*delta_t
+             
+    return theta
+            
+            
+
+def systeme_force(omega_ini,theta,couplage,delta_t) :
+    """ Calcule le pas suivant ou un oscillateur a une vitesse angulaire forcée : il n'unteragit avec personne """
+    d_theta = np.zeros(n)
+    
+    for i in range(n) :
+        if i != n //2 :
+            d_theta[i] = omega_ini[i] + np.sum(couplage*(np.sin(theta-np.ones(n)*theta[i])))
+        else :
+            d_theta[i] = 5
+    theta = theta + d_theta*delta_t
+    return theta
+
+### Évolution du système au cours du temps ###
+def calcul_trajectoire(fin,dt, theta_initial, systeme, couplage ) :
+
+    nb_pas = int(fin// dt) #Nombre total de pas
+
+    moy_dif = np.empty([n, nb_pas],float)
+
+    temps_fais = 0 #initialisation du temps
+
+    t = np.empty(nb_pas,float) #tableau contenant tous les temps
+    
+    # paramètre d'ordre 
+    parametre_ordre = []
+    
+    # configuration du système à t= 0
+    theta = theta_initial
+    
+    # tableau des oscillateurs ramenés à une liste
+    theta_liste = np.ndarray.flatten(theta)
+
+    for k in range(nb_pas):
+        
+        moy_dif[:,k] = np.cos(theta_liste[:]) - np.mean(np.cos(theta_liste))
+        
+        #Invocation de la fonction évolution
+        theta = systeme(omega_ini, theta, couplage, dt) 
+        
+        # actualiste le tableau des theta aplatis
+        theta_liste = np.ndarray.flatten(theta)
+        
+        parametre_ordre.append( np.sqrt( np.mean(np.cos(theta_liste))**2 + np.mean(np.sin(theta_liste))**2 ) )
+        
+        temps_fais = temps_fais + dt #Temps fait
+        t[k] = temps_fais #Liste de la totalité des temps
+    
+    return  parametre_ordre, moy_dif, np.array(t)
+
+param_ordre, moyenne_diff , t = calcul_trajectoire(temps_tot,delta_t, theta_ini, système_reseau, couplage = K/4 )
+
+for i in range(n) :
+    plt.plot(t,moyenne_diff[i,:])
+plt.show()
+
+plt.plot(t,param_ordre)
