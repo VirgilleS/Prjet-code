@@ -5,11 +5,11 @@ from matplotlib import animation
 
 ### PARAMÈTRES ###
 
-ni, nj = 5, 5 #nombre d'oscillateurs sur les lignes, colonnes
+ni, nj = 50, 50 #nombre d'oscillateurs sur les lignes, colonnes
 n = ni*nj
 omega_moy = 1 #pulsation moyenne des particules
-delta_omega = 0.5 #écart type des pulsations
-K = 15
+delta_omega = 0.1 #écart type des pulsations
+K = 100
 K_N=K/n #constante de couplage
 delta_t = 0.001 #pas du temps
 temps_tot = 75 #temps d'observation
@@ -120,7 +120,8 @@ print(theta_temps.shape)
 
 ### Colour plot 2D ANIMATION
 
-
+x = np.linspace(0,1,nj)
+y=np.linspace(0,1,ni)
 # Set the figure size 
 plt.rcParams["figure.figsize"] = [7.00, 3.50] 
 plt.rcParams["figure.autolayout"] = True # Random data for the contour plot 
@@ -128,7 +129,8 @@ data = theta_temps # Create a figure and a set of subplots
 fig, ax = plt.subplots() # Method to change the contour data points 
 def animate(i): 
     ax.clear() 
-    ax.contourf(data[:, :, i], cmap='plasma') 
+#    ax.contourf(data[i,:,:],50,cmap='plasma')
+    ax.pcolormesh(x,y,data[i,:, :],cmap='plasma') 
 # Call animate method 
-ani = animation.FuncAnimation(fig, animate, len(theta_temps[:,0,0]), interval=20, blit=False) # Display the plot 
-#plt.show()
+ani = animation.FuncAnimation(fig, animate, len(theta_temps[:,0,0]), interval=0.002, blit=False) # Display the plot 
+plt.show()
