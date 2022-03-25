@@ -41,12 +41,12 @@ def système_plus1(omega_ini, theta, K_N, delta_t, n, R, d_theta):
 def evolution_moy_r(n, omega_ini, K_N, delta_t,temps_tot, d_theta):
     theta = np.random.uniform(0, 2*np.pi,n)
     nb_pas = int(temps_tot//delta_t) #Nombre total de pas
-    r = np.zeros(nb_pas, np.float64)
+    r = []
     for k in range(nb_pas): 
         R=np.array(np.random.normal( 0, 1, size=(n)))
         theta = système_plus1(omega_ini, theta, K_N, delta_t, n, R, d_theta)           
         if k > nb_pas/2:
-            r[k]= (np.sqrt(np.mean(np.cos(theta))**2 + np.mean(np.sin(theta))**2))
+            r.append(np.sqrt(np.mean(np.cos(theta))**2 + np.mean(np.sin(theta))**2))
     return r
 
 r_mean = []
