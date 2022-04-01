@@ -28,14 +28,16 @@ omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(ni,nj)))
 
 ### Fonction d'évolution ###
 
+@jit(nopython=True)
 def couplage_sin(x) :
     return np.sin(x)
-
+    
+@jit(nopython=True)
 def chapeau_mexicain(t) :
     sgima = 1
     return 1/(np.sqrt(3*sigma*np.pi**(1/2))) * (1-(t/sigma)**2 )*np.exp(- t**2/(2*sigma**2))
 
-#@jit(nopython=True)
+@jit(nopython=True)
 def système_reseau(omega_ini, theta, fonction_couplage, couplage, delta_t, ni, nj, dephasage):
     """  Calcule le pas suivant selon l'équation dynamique de sproches voisins 2D : réseaux """
     
@@ -114,7 +116,7 @@ def calcul_trajectoire(fin,dt, theta_initial, fonction_couplage, systeme, coupla
     t[1:] = t[1:][t[1:] != 0]
     return save_theta, np.array(t)
 
-theta_temps, t = calcul_trajectoire(temps_tot,delta_t, theta_ini, couplage_sin, système_reseau, couplage = K/4, dephasage = 0 )
+theta_temps, t = calcul_trajectoire(temps_tot,delta_t, theta_ini, couplage_sin, système_reseau, couplage = K/4, dephasage = np.pi/5 )
 
 # filtre les tableaux sautés
 theta_temps = np.delete(theta_temps, np.where(~theta_temps.any(axis=1))[0], axis=0)
