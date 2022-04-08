@@ -37,7 +37,7 @@ def système_reseau(omega_ini, theta, couplage, delta_t, ni, nj):
     
     for i in range(ni) :
         for j in range(nj) :
-            d_theta[i,j] = omega_ini[i,j] + couplage*( fonction_couplage(theta[i,j+1]-theta[i,j] - dephasage) + fonction_couplage(theta[i,j-1]-theta[i,j] - dephasage)                                                      + fonction_couplage(theta[i+1,j]-theta[i,j] - dephasage) + fonction_couplage(theta[i-1,j]-theta[i,j] - dephasage))
+            d_theta[i,j] = omega_ini[i,j] + couplage*( fonction_couplage(theta[i,j+1]-theta[i,j] - dephasage) + fonction_couplage(theta[i,j-1]-theta[i,j] - dephasage) + fonction_couplage(theta[i+1,j]-theta[i,j] - dephasage) + fonction_couplage(theta[i-1,j]-theta[i,j] - dephasage))
              
     theta += d_theta*delta_t
              
