@@ -12,7 +12,7 @@ delta_omega = 0.5 #écart type des pulsations
 K = 12
 K_N=K/n #constante de couplage
 delta_t = 0.001 #pas du temps
-temps_tot = 75 #temps d'observation
+temps_tot = 15 #temps d'observation
 
 saut = 10 # saut de pas de temps sélectionnés
 
@@ -47,7 +47,6 @@ def système_reseau(omega_ini, theta, fonction_couplage, couplage, delta_t, ni, 
     
     # variables 
     d_theta = np.zeros((ni,nj))
-    sigma = 1
     
     # conditions périodiques aux bords sur les colonnes 
     for i in range(ni) :
@@ -56,8 +55,6 @@ def système_reseau(omega_ini, theta, fonction_couplage, couplage, delta_t, ni, 
     theta += d_theta*delta_t
              
     return theta
-            
-            
 
 def systeme_force(omega_ini,theta,couplage,delta_t) :
     """ Calcule le pas suivant ou un oscillateur a une vitesse angulaire forcée : il n'unteragit avec personne """
@@ -104,7 +101,7 @@ def calcul_trajectoire(fin,dt, theta_initial, fonction_couplage, systeme, coupla
     t[1:] = t[1:][t[1:] != 0]
     return save_theta, np.array(t)
 
-theta_temps, t = calcul_trajectoire(temps_tot,delta_t, theta_ini, couplage_sin, système_reseau, couplage = K/4, dephasage = np.pi/2 )
+theta_temps, t = calcul_trajectoire(temps_tot,delta_t, theta_ini, couplage_sin, système_reseau, couplage = K/4, dephasage = np.pi/5 )
 
 # filtre les tableaux sautés
 theta_temps = np.delete(theta_temps, np.where(~theta_temps.any(axis=1))[0], axis=0)
@@ -126,7 +123,9 @@ ani = animation.FuncAnimation(fig, animate, len(theta_temps[:,0,0]), interval=20
 #plt.show()
 
 
-
+writerFFMpeg = animation.FFMpegWriter(fps=20)
+ani.save('synchro_N100_K50_1erVoisin_gauss_cercle.mp4',writer = writerFFMpeg, dpi=200)
+ #plt.show()
 
 
 #
