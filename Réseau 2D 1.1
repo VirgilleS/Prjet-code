@@ -33,25 +33,9 @@ def système_reseau(omega_ini, theta, couplage, delta_t):
     """  Calcule le pas suivant selon l'équation dynamique de sproches voisins 2D : réseaux """
     d_theta = np.zeros((ni,nj))
     
-    # conditions périodiques aux bords sur les colonnes 
-    for j in range(nj) :
-        d_theta[0,j] = omega_ini[0,j] + couplage*( np.sin(theta[-1,j] - theta[0,j]) + np.sin(theta[1,j] - theta[0,j]) )
-        d_theta[-1,j] = omega_ini[-1,j] + couplage*( np.sin(theta[0,j] - theta[-1,j]) + np.sin(theta[-2,j] - theta[-1,j]) ) 
-        
-    # conditions périodiques aux bords sur les lignes 
     for i in range(ni) :
-        if i == 0 or i == ni - 1 :
-            d_theta[i,0] +=  couplage*( np.sin(theta[i,-1] - theta[i,0]) + np.sin(theta[i,1] - theta[i,0]) )
-            d_theta[i,-1] += couplage*( np.sin(theta[i,0] - theta[i,-1]) + np.sin(theta[i,-2] - theta[i,-1]) )
-            
-        else:
-            d_theta[i,0] += omega_ini[1,j] + couplage*( np.sin(theta[i,-1] - theta[i,0]) + np.sin(theta[i,1] - theta[i,0]) )
-            d_theta[i,j] += omega_ini[-1,j] + couplage*( np.sin(theta[i,0] - theta[i,-1]) + np.sin(theta[i,-2] - theta[i,-1]) )
-    
-    for i in range(1,ni-1) :
-        for j in range(1,nj-1) :
-             d_theta[i,j] = omega_ini[i,j] + couplage*( np.sin(theta[i+1,j]-theta[i,j]) + np.sin(theta[i-1,j]-theta[i,j]))
-             d_theta[i,j] += couplage*( np.sin(theta[i,j+1]-theta[i,j]) + np.sin(theta[i,j-1]-theta[i,j]))
+        for j in range(nj) :
+            d_theta[i,j] = omega_ini[i,j] + couplage*( fonction_couplage(theta[i,j+1]-theta[i,j] - dephasage) + fonction_couplage(theta[i,j-1]-theta[i,j] - dephasage)                                                      + fonction_couplage(theta[i+1,j]-theta[i,j] - dephasage) + fonction_couplage(theta[i-1,j]-theta[i,j] - dephasage))
              
     theta += d_theta*delta_t
              
