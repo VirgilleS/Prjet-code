@@ -1,0 +1,157 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from numba import jit 
+from matplotlib import animation
+
+### PARAMÈTRES ###
+
+ni, nj = 65, 65 #nombre d'oscillateurs sur les lignes, colonnes
+n = ni*nj
+omega_moy = 1 #pulsation moyenne des particules
+delta_omega = 0.5 #écart type des pulsations
+K = 12
+K_N=K/n #constante de couplage
+delta_t = 0.001 #pas du temps
+temps_tot = 75 #temps d'observation
+
+saut = 10 # saut de pas de temps sélectionnés
+
+### CONDITIONS INITIALES ###
+
+theta_ini = np.random.uniform(0, 2*np.pi,(ni,nj)) 
+#positions aléatoirement réparties sur le cercle
+
+omega_ini=np.array(np.random.normal(omega_moy, delta_omega, size=(ni,nj)))
+#pulsations réparties comme une distribution gaussienne
+
+### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
+
+### Fonction d'évolution ###
+
+@jit(nopython=True)
+def couplage_sin(x) :
+    return np.sin(x)
+
+@jit(nopython=True)
+def couplage_fourier(x) :
+    return np.sin(x) + 1/2 * np.sin(2*x)
+
+@jit(nopython=True)
+def chapeau_mexicain(t) :
+    sgima = 1
+    return 1/(np.sqrt(3*sigma*np.pi**(1/2))) * (1-(t/sigma)**2 )*np.exp(- t**2/(2*sigma**2))
+
+@jit(nopython=True)
+def système_reseau(omega_ini, theta, fonction_couplage, couplage, delta_t, ni, nj, dephasage):
+    """  Calcule le pas suivant selon l'équation dynamique de sproches voisins 2D : réseaux """
+    
+    # variables 
+    d_theta = np.zeros((ni,nj))
+    sigma = 1
+    
+    # conditions périodiques aux bords sur les colonnes 
+    for i in range(ni) :
+        for j in range(nj) :
+            d_theta[i,j] = omega_ini[i,j] + couplage*( fonction_couplage(theta[i,j+1]-theta[i,j] - dephasage) + fonction_couplage(theta[i,j-1]-theta[i,j] - dephasage) + fonction_couplage(theta[i+1,j]-theta[i,j] - dephasage) + fonction_couplage(theta[i-1,j]-theta[i,j] - dephasage))
+    theta += d_theta*delta_t
+             
+    return theta
+            
+            
+
+def systeme_force(omega_ini,theta,couplage,delta_t) :
+    """ Calcule le pas suivant ou un oscillateur a une vitesse angulaire forcée : il n'unteragit avec personne """
+    d_theta = np.zeros(n)
+    
+    for i in range(n) :
+        if i != n //2 :
+            d_theta[i] = omega_ini[i] + np.sum(couplage*(np.sin(theta-np.ones(n)*theta[i])))
+        else :
+            d_theta[i] = 5
+    theta = theta + d_theta*delta_t
+    return theta
+
+### Évolution du système au cours du temps ###
+def calcul_trajectoire(fin,dt, theta_initial, fonction_couplage, systeme, couplage, dephasage) :
+
+    nb_pas = int(fin// dt) #Nombre total de pas
+    temps_fais = 0 #initialisation du temps
+
+    t = np.zeros(nb_pas,float) #tableau contenant tous les temps
+
+    # configuration du système à t= 0
+    theta = theta_initial
+    
+    # save theta
+    save_theta = np.zeros((nb_pas+1,ni,nj))
+    save_theta[0] = theta
+
+    for k in range(nb_pas):
+        
+        #Invocation de la fonction évolution
+        theta = systeme(omega_ini, theta, fonction_couplage, couplage, dt, ni, nj, dephasage) 
+        
+        # sauvegarde de la matrice theta au temps kdt
+        if k % saut == 0 :
+            save_theta[k+1,:,:] = np.cos(theta)
+        
+        temps_fais = temps_fais + dt #Temps fait
+        t[k] = temps_fais #Liste de la totalité des temps
+        
+        if k % (nb_pas//20) == 0 :
+            print(k/nb_pas*100,'%')
+    
+    t[1:] = t[1:][t[1:] != 0]
+    return save_theta, np.array(t)
+
+theta_temps, t = calcul_trajectoire(temps_tot,delta_t, theta_ini, couplage_sin, système_reseau, couplage = K/4, dephasage = np.pi/2 )
+
+# filtre les tableaux sautés
+theta_temps = np.delete(theta_temps, np.where(~theta_temps.any(axis=1))[0], axis=0)
+print(theta_temps.shape)
+
+### Colour plot 2D ANIMATION
+
+
+# Set the figure size 
+plt.rcParams["figure.figsize"] = [7.00, 3.50] 
+plt.rcParams["figure.autolayout"] = True # Random data for the contour plot 
+data = theta_temps # Create a figure and a set of subplots 
+fig, ax = plt.subplots() # Method to change the contour data points 
+def animate(i): 
+    ax.clear() 
+    ax.contourf(data[i,:, :], cmap='plasma') 
+# Call animate method 
+ani = animation.FuncAnimation(fig, animate, len(theta_temps[:,0,0]), interval=20, blit=False) # Display the plot 
+#plt.show()
+
+
+
+
+
+#
+#X = np.linspace(0,nj-1,nj)
+#Y = np.linspace(0,ni-1,ni)
+#
+#### ANIMATION ###
+#fig,ax = plt.subplots()
+#def animate(i): 
+#    ax.clear()
+#    ax.contourf(theta_temps[i,:,:])
+#
+#anim = animation.FuncAnimation(fig, animate, frames= len(theta_temps[:,0,0])-1, interval=20, blit=True, repeat=False)
+
+#plt.show()
+
+      
+#fig = plt.figure()
+
+#Animation cos(theta_i) fonction de i
+
+#ax = plt.axes(xlim=(0, nj), ylim=(0, ni)) 
+#ax.set_ylabel('cos(theta_i)', size = ni)
+#ax.set_xlabel('cos(theta_i)', size = nj)
+#line, = plt.contourf(X, Y, Z, 10)
+
+#anim = animation.FuncAnimation(fig, animate_en_ligne, frames= (temps_tot*delta_t)//saut, interval=20, blit=True, repeat=False)
+#plt.show()
