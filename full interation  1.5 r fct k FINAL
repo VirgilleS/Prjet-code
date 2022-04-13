@@ -4,21 +4,20 @@ from numba import jit
 
 ### PARAMÈTRES ###
 
-n=200#nombre de particules dd
-omega_moy = 1 #pulsation moyenne des particules
-delta_omega = 0 #écart type des pulsations
-K=np.arange(1, 5, 0.05)
-K_N=K/n #constante de couplage
-delta_t = 0.001 #pas du temps
-temps_tot = 15 #temps d'observation
-D = 0.2 #bruit
+n = 1000  # nombre de particules dd
+omega_moy = 3  # pulsation moyenne des particules
+delta_omega = 9  # écart type des pulsations
+K = np.arange(0, 50, 0.5)
+K_N = K / n  # constante de couplage
+delta_t = 0.005  # pas du temps
+temps_tot = 10  # temps d'observation
+D = 0  # bruit
 
 ### CONDITIONS INITIALES ###
 
-omega_ini=np.random.normal(omega_moy, delta_omega, size=n)
+omega_ini = np.random.normal(omega_moy, delta_omega, size=n)
 
-#pulsations réparties comme une distribution gaussienne
-
+# pulsations réparties comme une distribution gaussienne
 
 
 ### RÉSOLUTION PAR LA MÉTHODE D'EULER ###
@@ -27,7 +26,7 @@ d_theta = np.zeros(n)
 
 ### Fonction d'évolution ###
 
-@jit(nopython = True) 
+@jit(nopython = True)
 def système_plus1(omega_ini, theta, K_N, delta_t, n, R, d_theta):
     for i in range(n):
         d_theta[i] = omega_ini[i] + np.sum(K_N*(np.sin(theta-np.ones(n)*theta[i])))
@@ -37,24 +36,25 @@ def système_plus1(omega_ini, theta, K_N, delta_t, n, R, d_theta):
 
 
 ### Évolution du système au cours du temps ###
-#@jit(nopython = True) 
 def evolution_moy_r(n, omega_ini, K_N, delta_t,temps_tot, d_theta):
     theta = np.random.uniform(0, 2*np.pi,n)
     nb_pas = int(temps_tot//delta_t) #Nombre total de pas
     r = []
-    for k in range(nb_pas): 
+    for k in range(nb_pas):
         R=np.array(np.random.normal( 0, 1, size=(n)))
-        theta = système_plus1(omega_ini, theta, K_N, delta_t, n, R, d_theta)           
+        theta = système_plus1(omega_ini, theta, K_N, delta_t, n, R, d_theta)
         if k > nb_pas/2:
             r.append(np.sqrt(np.mean(np.cos(theta))**2 + np.mean(np.sin(theta))**2))
     return r
 
 r_mean = []
 for j in range(len(K_N)):
-    r_mean.append(np.mean(evolution_moy_r(n, omega_ini, K_N[j], delta_t,temps_tot, d_theta)))
+    r_mean.append(np.mean(evolution_moy_r(n, omega_ini, K_N[j], delta_t, temps_tot, d_theta)))
     print(j)
 
- 
 plt.plot(K, r_mean)
 plt.ylim(0, 1)
+plt.xlabel("K")
+plt.ylabel("r")
 plt.show()
+
